@@ -13,6 +13,8 @@ services:
       - ./yarn.lock:/app/yarn.lock
       - ./tsconfig.json:/app/tsconfig.json
       - /app/node_modules
+    env_file:
+      - .env
     restart: unless-stopped
     healthcheck:
       test:
