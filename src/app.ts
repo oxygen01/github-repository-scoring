@@ -1,23 +1,17 @@
 import express, { Request, Response } from 'express'
 import { repositoriesRouter } from './routes/repositories.routes'
 import { getConfig } from './config/app.config'
-import cors from 'cors'
+
 import { SCORING_FORMULA } from './controllers/repositories.controller'
+import { applySecurityMiddleware } from './security'
 
 const app = express()
 const config = getConfig()
 
-// Middleware
-app.use(express.json())
+// Apply security before routes
+applySecurityMiddleware(app, config)
 
-// CORS middleware
-app.use(
-  cors({
-    origin: config.cors.origin,
-    allowedHeaders: config.cors.headers.split(', '),
-    methods: config.cors.methods.split(', '),
-  }),
-)
+app.use(express.json())
 
 // API routes
 app.use(`/api/${config.api.version}/repositories`, repositoriesRouter)
