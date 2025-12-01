@@ -112,18 +112,3 @@ class GitHubService {
 }
 
 export const githubService = new GitHubService()
-
-export const SUPPORTED_LANGUAGES: string[] = [
-  'javascript',
-  'typescript',
-  'python',
-  'java',
-  'go',
-  'rust',
-  'c++',
-  'c#',
-  'php',
-  'ruby',
-  'swift',
-  'kotlin',
-]

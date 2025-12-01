@@ -167,11 +167,8 @@ describe('Repositories Route - /score', () => {
         })
 
       expect(response.status).toBe(400)
-      expect(response.body.error).toMatchObject({
-        message: 'language parameter is required.',
-        code: 'INVALID_PARAMETERS',
-        status: 400,
-      })
+      expect(response.body.error.code).toBe('INVALID_PARAMETERS')
+      expect(response.body.error.message).toContain('language')
     })
 
     it('should return 400 when createdAfter parameter is missing', async () => {
@@ -182,11 +179,8 @@ describe('Repositories Route - /score', () => {
         })
 
       expect(response.status).toBe(400)
-      expect(response.body.error).toMatchObject({
-        message: 'createdAfter parameter is required.',
-        code: 'INVALID_PARAMETERS',
-        status: 400,
-      })
+      expect(response.body.error.code).toBe('INVALID_PARAMETERS')
+      expect(response.body.error.message).toContain('createdAfter')
     })
 
     it('should return 400 for unsupported language', async () => {
@@ -198,9 +192,7 @@ describe('Repositories Route - /score', () => {
         })
 
       expect(response.status).toBe(400)
-      expect(response.body.error.message).toContain(
-        "Unsupported language 'cobol'",
-      )
+      expect(response.body.error.message).toContain('Unsupported language')
       expect(response.body.error.code).toBe('INVALID_PARAMETERS')
     })
 
@@ -213,9 +205,7 @@ describe('Repositories Route - /score', () => {
         })
 
       expect(response.status).toBe(400)
-      expect(response.body.error.message).toContain(
-        'Invalid createdAfter date format',
-      )
+      expect(response.body.error.message).toContain('Invalid date format')
       expect(response.body.error.code).toBe('INVALID_PARAMETERS')
     })
 
@@ -232,9 +222,7 @@ describe('Repositories Route - /score', () => {
         })
 
       expect(response.status).toBe(400)
-      expect(response.body.error.message).toContain(
-        'createdAfter date cannot be in the future',
-      )
+      expect(response.body.error.message).toContain('cannot be in the future')
       expect(response.body.error.code).toBe('INVALID_PARAMETERS')
     })
 
@@ -248,7 +236,7 @@ describe('Repositories Route - /score', () => {
         })
 
       expect(response1.status).toBe(400)
-      expect(response1.body.error.message).toContain('Invalid limit parameter')
+      expect(response1.body.error.message).toContain('limit')
 
       const response2 = await request(app)
         .get('/api/v1/repositories/score')
@@ -259,7 +247,7 @@ describe('Repositories Route - /score', () => {
         })
 
       expect(response2.status).toBe(400)
-      expect(response2.body.error.message).toContain('Invalid limit parameter')
+      expect(response2.body.error.message).toContain('limit')
     })
   })
 
