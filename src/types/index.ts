@@ -8,13 +8,13 @@ export type GithubRepository = SearchRepositoriesResponse['items'][number]
 export type Repository = {
   id: GithubRepository['id']
   name: GithubRepository['name']
-  full_name: GithubRepository['full_name']
-  html_url: GithubRepository['html_url']
-  stargazers_count: GithubRepository['stargazers_count']
-  forks_count: GithubRepository['forks_count']
-  updated_at: GithubRepository['updated_at']
+  fullName: GithubRepository['full_name']
+  htmlUrl: string
+  stargazersCount: GithubRepository['stargazers_count']
+  forksCount: GithubRepository['forks_count']
+  updatedAt: GithubRepository['updated_at']
   language: GithubRepository['language']
-  created_at: GithubRepository['created_at']
+  createdAt: GithubRepository['created_at']
 }
 
 type SearchRepositoriesParameters =
@@ -22,18 +22,19 @@ type SearchRepositoriesParameters =
 
 // Application-specific search filters that map to GitHub API parameters
 export interface SearchFilters {
+  targetedSystem: 'GITHUB' | 'GITLAB' | 'BITBUCKET'
   language: string // Required: Programming language filter
   createdAfter: string // Required: Creation date filter in ISO8601 format (YYYY-MM-DD)
   limit?: SearchRepositoriesParameters['per_page'] // Optional: Number of results (1-100, default 30)
 }
 
 export interface ScoredRepository extends Repository {
-  popularity_score: number
+  popularityScore: number
 }
 
 export interface SearchRepositoriesApiResponse {
-  total_count: number
-  popularity_score_max: number
+  totalCount: number
+  popularityScoreMax: number
   formula: string
   repositories: ScoredRepository[]
 }

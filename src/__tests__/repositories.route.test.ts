@@ -61,13 +61,13 @@ describe('Repositories Route - /score', () => {
   const createMockRepo = (overrides: Partial<Repository> = {}): Repository => ({
     id: 12345,
     name: 'test-repo',
-    full_name: 'owner/test-repo',
-    html_url: 'https://github.com/owner/test-repo',
-    stargazers_count: 100,
-    forks_count: 20,
-    updated_at: '2024-01-01T00:00:00Z',
+    fullName: 'owner/test-repo',
+    htmlUrl: 'https://github.com/owner/test-repo',
+    stargazersCount: 100,
+    forksCount: 20,
+    updatedAt: '2024-01-01T00:00:00Z',
     language: 'JavaScript',
-    created_at: '2023-01-01T00:00:00Z',
+    createdAt: '2023-01-01T00:00:00Z',
     ...overrides,
   })
 
@@ -75,23 +75,23 @@ describe('Repositories Route - /score', () => {
     createMockRepo({
       id: 1,
       name: 'popular-repo',
-      stargazers_count: 5000,
-      forks_count: 1000,
-      updated_at: '2024-01-01T00:00:00Z', // Recent
+      stargazersCount: 5000,
+      forksCount: 1000,
+      updatedAt: '2024-01-01T00:00:00Z', // Recent
     }),
     createMockRepo({
       id: 2,
       name: 'medium-repo',
-      stargazers_count: 500,
-      forks_count: 100,
-      updated_at: '2023-06-01T00:00:00Z', // Older
+      stargazersCount: 500,
+      forksCount: 100,
+      updatedAt: '2023-06-01T00:00:00Z', // Older
     }),
     createMockRepo({
       id: 3,
       name: 'small-repo',
-      stargazers_count: 50,
-      forks_count: 10,
-      updated_at: '2024-01-15T00:00:00Z', // Recent but small
+      stargazersCount: 50,
+      forksCount: 10,
+      updatedAt: '2024-01-15T00:00:00Z', // Recent but small
     }),
   ]
 
@@ -110,26 +110,23 @@ describe('Repositories Route - /score', () => {
 
       expect(response.status).toBe(200)
       expect(response.body).toMatchObject({
-        total_count: 3,
-        popularity_score_max: 10,
+        totalCount: 3,
+        popularityScoreMax: 10,
         formula: '(stars + forks * 2) * timeFactor / 7000 * 10',
         repositories: expect.any(Array),
       })
 
       const repos = response.body.repositories
       expect(repos).toHaveLength(3)
-      expect(repos[0]).toHaveProperty('popularity_score')
-      expect(repos[0].popularity_score).toBeGreaterThan(
-        repos[1].popularity_score,
-      )
-      expect(repos[1].popularity_score).toBeGreaterThan(
-        repos[2].popularity_score,
-      )
+      expect(repos[0]).toHaveProperty('popularityScore')
+      expect(repos[0].popularityScore).toBeGreaterThan(repos[1].popularityScore)
+      expect(repos[1].popularityScore).toBeGreaterThan(repos[2].popularityScore)
 
       expect(mockGithubService.searchRepositories).toHaveBeenCalledWith({
         language: 'javascript',
         createdAfter: '2023-01-01',
         limit: 10,
+        targetedSystem: 'GITHUB',
       })
     })
 
@@ -154,10 +151,11 @@ describe('Repositories Route - /score', () => {
         language: 'python',
         createdAfter: '2023-01-01',
         limit: undefined,
+        targetedSystem: 'GITHUB',
       })
       // Verify the cache key also uses 100 as the default
       expect(mockCacheService.get).toHaveBeenCalledWith(
-        'repos:score:python:2023-01-01:100',
+        'repos:score:python:2023-01-01:100:GITHUB',
       )
     })
   })
@@ -342,15 +340,15 @@ describe('Repositories Route - /score', () => {
       const repos = response.body.repositories
 
       // Verify response metadata
-      expect(response.body.total_count).toBe(3)
+      expect(response.body.totalCount).toBe(3)
 
-      repos.forEach((repo: Repository & { popularity_score: number }) => {
+      repos.forEach((repo: Repository & { popularityScore: number }) => {
         expect(repo).toHaveProperty('id')
         expect(repo).toHaveProperty('name')
-        expect(repo).toHaveProperty('popularity_score')
-        expect(typeof repo.popularity_score).toBe('number')
-        expect(repo.popularity_score).toBeGreaterThanOrEqual(0)
-        expect(repo.popularity_score).toBeLessThanOrEqual(10)
+        expect(repo).toHaveProperty('popularityScore')
+        expect(typeof repo.popularityScore).toBe('number')
+        expect(repo.popularityScore).toBeGreaterThanOrEqual(0)
+        expect(repo.popularityScore).toBeLessThanOrEqual(10)
       })
     })
   })
@@ -359,12 +357,12 @@ describe('Repositories Route - /score', () => {
     it('should return cached result when available', async () => {
       const mockRepos = createMockRepos()
       const cachedResponse = {
-        total_count: 3,
-        popularity_score_max: 10,
+        totalCount: 3,
+        popularityScoreMax: 10,
         formula: '(stars + forks * 2) * timeFactor / 7000 * 10',
         repositories: mockRepos.map(repo => ({
           ...repo,
-          popularity_score: 8.5,
+          popularityScore: 8.5,
         })),
       }
 
@@ -384,7 +382,7 @@ describe('Repositories Route - /score', () => {
 
       // Verify cache was checked with correct key
       expect(mockCacheService.get).toHaveBeenCalledWith(
-        'repos:score:javascript:2023-01-01:10',
+        'repos:score:javascript:2023-01-01:10:GITHUB',
       )
 
       // Verify GitHub API was NOT called (cache hit)
@@ -413,7 +411,7 @@ describe('Repositories Route - /score', () => {
 
       // Verify cache was checked
       expect(mockCacheService.get).toHaveBeenCalledWith(
-        'repos:score:python:2023-06-01:50',
+        'repos:score:python:2023-06-01:50:GITHUB',
       )
 
       // Verify GitHub API was called (cache miss)
@@ -421,14 +419,15 @@ describe('Repositories Route - /score', () => {
         language: 'python',
         createdAfter: '2023-06-01',
         limit: 50,
+        targetedSystem: 'GITHUB',
       })
 
       // Verify result was stored in cache
       expect(mockCacheService.set).toHaveBeenCalledWith(
-        'repos:score:python:2023-06-01:50',
+        'repos:score:python:2023-06-01:50:GITHUB',
         expect.objectContaining({
-          total_count: 3,
-          popularity_score_max: 10,
+          totalCount: 3,
+          popularityScoreMax: 10,
           formula: '(stars + forks * 2) * timeFactor / 7000 * 10',
           repositories: expect.any(Array),
         }),
@@ -451,11 +450,11 @@ describe('Repositories Route - /score', () => {
 
       // Verify cache key uses default limit of 100
       expect(mockCacheService.get).toHaveBeenCalledWith(
-        'repos:score:go:2023-01-01:100',
+        'repos:score:go:2023-01-01:100:GITHUB',
       )
 
       expect(mockCacheService.set).toHaveBeenCalledWith(
-        'repos:score:go:2023-01-01:100',
+        'repos:score:go:2023-01-01:100:GITHUB',
         expect.any(Object),
       )
     })

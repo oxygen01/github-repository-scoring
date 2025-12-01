@@ -1,24 +1,24 @@
 import {
-  calculateLinearScore,
-  GithubRepoScoreInput,
+  calculateGitHubScore,
+  RepoScoreInput,
 } from '../services/scoring.service'
 
 const validateDate = (dateStr: string): boolean => {
   const date = new Date(dateStr)
   return !isNaN(date.getTime())
 }
-export function calculateScoreExponential(repo: GithubRepoScoreInput): number {
-  const stars = repo.stargazers_count ?? 0
-  const forks = repo.forks_count ?? 0
+export function calculateScoreExponential(repo: RepoScoreInput): number {
+  const stars = repo.stargazersCount ?? 0
+  const forks = repo.forksCount ?? 0
 
   // Popularity measure
   const popularity = stars * 2 + forks
-  if (!validateDate(repo.updated_at)) {
-    throw new Error('Invalid date format for updated_at')
+  if (!validateDate(repo.updatedAt)) {
+    throw new Error('Invalid date format for updatedAt')
   }
   // Days since last update
   const daysSinceUpdate =
-    (Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60 * 24)
+    (Date.now() - new Date(repo.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
 
   // Exponential decay factor (λ = 0.05)
   const lambda = 0.05
@@ -36,21 +36,19 @@ export function calculateScoreExponential(repo: GithubRepoScoreInput): number {
   return Number(Math.min(10, normalized).toFixed(2))
 }
 
-export function calculateScoreHackerNewsRanking(
-  repo: GithubRepoScoreInput,
-): number {
-  const stars = repo.stargazers_count ?? 0
-  const forks = repo.forks_count ?? 0
+export function calculateScoreHackerNewsRanking(repo: RepoScoreInput): number {
+  const stars = repo.stargazersCount ?? 0
+  const forks = repo.forksCount ?? 0
 
   // HN-style popularity
   const popularity = stars + forks * 0.5
 
-  if (!validateDate(repo.updated_at)) {
-    throw new Error('Invalid date format for updated_at')
+  if (!validateDate(repo.updatedAt)) {
+    throw new Error('Invalid date format for updatedAt')
   }
   // Hours since update
   const hoursSinceUpdate =
-    (Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60)
+    (Date.now() - new Date(repo.updatedAt).getTime()) / (1000 * 60 * 60)
 
   // HN decay factor
   const rawScore = popularity / Math.pow(hoursSinceUpdate + 2, 1.5)
@@ -62,13 +60,13 @@ export function calculateScoreHackerNewsRanking(
   return Number(Math.min(10, normalized).toFixed(2))
 }
 
-function generateFakeRepos(count: number): GithubRepoScoreInput[] {
+function generateFakeRepos(count: number): RepoScoreInput[] {
   const repos = []
   for (let i = 0; i < count; i++) {
     repos.push({
-      stargazers_count: Math.floor(Math.random() * 50000),
-      forks_count: Math.floor(Math.random() * 10000),
-      updated_at: new Date(
+      stargazersCount: Math.floor(Math.random() * 50000),
+      forksCount: Math.floor(Math.random() * 10000),
+      updatedAt: new Date(
         Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 2000,
       ).toISOString(),
     })
@@ -91,7 +89,7 @@ benchmark('Exponential algorithm', () => {
 })
 
 benchmark('Linear algorithm', () => {
-  for (const repo of repos) calculateLinearScore(repo)
+  for (const repo of repos) calculateGitHubScore(repo)
 })
 
 benchmark('Hacker News ranking', () => {

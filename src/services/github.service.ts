@@ -59,6 +59,7 @@ const cleanApiError = (error: unknown): ApiError => {
  *
  * @see https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
  */
+
 class GitHubService {
   private octokit: Octokit
 
@@ -91,13 +92,13 @@ class GitHubService {
         (item: GithubRepository): Repository => ({
           id: item.id,
           name: item.name,
-          full_name: item.full_name,
-          html_url: item.html_url,
-          stargazers_count: item.stargazers_count,
-          forks_count: item.forks_count,
-          updated_at: item.updated_at,
+          fullName: item.full_name,
+          htmlUrl: item.html_url,
+          stargazersCount: item.stargazers_count,
+          forksCount: item.forks_count,
+          updatedAt: item.updated_at,
           language: item.language,
-          created_at: item.created_at,
+          createdAt: item.created_at,
         }),
       )
     } catch (error) {

@@ -1,11 +1,12 @@
 import { Request, Response } from 'express'
 import { githubService, SUPPORTED_LANGUAGES } from '../services/github.service'
-import { calculateLinearScore } from '../services/scoring.service'
+import { getScore } from '../services/scoring.service'
 import { cacheService } from '../services/cache.service'
 import {
   SearchFilters,
   SearchRepositoriesApiResponse,
   ApiError,
+  Repository,
 } from '../types'
 import { isValidDate } from '../utils/date'
 import { cleanInt } from '../utils/helpers'
@@ -17,6 +18,9 @@ const parseSearchFilters = (
   query: Record<string, unknown>,
 ): Partial<SearchFilters> => {
   return {
+    targetedSystem: query.targetedSystem
+      ? (String(query.targetedSystem) as 'GITHUB' | 'GITLAB' | 'BITBUCKET')
+      : 'GITHUB',
     language: query.language ? String(query.language) : undefined,
     createdAfter: query.createdAfter ? String(query.createdAfter) : undefined,
     limit: query.limit ? cleanInt(query.limit) : undefined,
@@ -25,7 +29,7 @@ const parseSearchFilters = (
 const validateFilters = (
   filters: Partial<SearchFilters>,
 ): { error?: string; validFilters?: SearchFilters } => {
-  const { language, createdAfter, limit } = filters
+  const { language, createdAfter, limit, targetedSystem } = filters
 
   if (!language) {
     return { error: 'language parameter is required.' }
@@ -64,6 +68,7 @@ const validateFilters = (
 
   return {
     validFilters: {
+      targetedSystem: targetedSystem || 'GITHUB',
       language,
       createdAfter,
       limit,
@@ -114,7 +119,7 @@ export const getScoredRepositories = async (
     const filters = validation.validFilters as SearchFilters
 
     // Create cache key from filters
-    const cacheKey = `repos:score:${filters.language}:${filters.createdAfter}:${filters.limit || 100}`
+    const cacheKey = `repos:score:${filters.language}:${filters.createdAfter}:${filters.limit || 100}:${filters.targetedSystem}`
 
     // Check cache first
     const cached = cacheService.get<SearchRepositoriesApiResponse>(cacheKey)
@@ -122,20 +127,34 @@ export const getScoredRepositories = async (
       res.json(cached)
       return
     }
-
     // Cache miss - fetch from GitHub API
-    const repositories = await githubService.searchRepositories(filters)
+    let repositories: Array<Repository> = []
+    switch (filters.targetedSystem) {
+      case 'GITHUB':
+        repositories = await githubService.searchRepositories(filters)
+        break
+      case 'GITLAB':
+        // Future implementation for GitLab  todo
+        repositories = []
+        break
+      case 'BITBUCKET':
+        // Future implementation for Bitbucket  todo
+        repositories = []
+        break
+      default:
+        repositories = await githubService.searchRepositories(filters)
+    }
 
     const scoredRepositories = repositories.map(repo => ({
       ...repo,
-      popularity_score: calculateLinearScore(repo),
+      popularityScore: getScore(repo, filters.targetedSystem),
     }))
 
-    scoredRepositories.sort((a, b) => b.popularity_score - a.popularity_score)
+    scoredRepositories.sort((a, b) => b.popularityScore - a.popularityScore)
 
     const response: SearchRepositoriesApiResponse = {
-      total_count: scoredRepositories.length,
-      popularity_score_max: POPULARITY_SCORE_MAX, // Since the simple scoring max is 10
+      totalCount: scoredRepositories.length,
+      popularityScoreMax: POPULARITY_SCORE_MAX, // Since the simple scoring max is 10
       formula: SCORING_FORMULA,
       repositories: scoredRepositories,
     }
