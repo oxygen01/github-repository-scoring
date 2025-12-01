@@ -6,7 +6,9 @@ import {
   SearchFilters,
   SearchRepositoriesApiResponse,
   ApiError,
-  Repository,
+  GitHubRepository,
+  GitLabRepository,
+  BitbucketRepository,
 } from '../types'
 import { isValidDate } from '../utils/date'
 import { cleanInt } from '../utils/helpers'
@@ -30,6 +32,16 @@ const validateFilters = (
   filters: Partial<SearchFilters>,
 ): { error?: string; validFilters?: SearchFilters } => {
   const { language, createdAfter, limit, targetedSystem } = filters
+  const validSystems: Array<'GITHUB' | 'GITLAB' | 'BITBUCKET'> = [
+    'GITHUB',
+    'GITLAB',
+    'BITBUCKET',
+  ]
+  if (targetedSystem && !validSystems.includes(targetedSystem)) {
+    return {
+      error: `Invalid targetedSystem '${targetedSystem}'. Supported systems: ${validSystems.join(', ')}`,
+    }
+  }
 
   if (!language) {
     return { error: 'language parameter is required.' }
@@ -128,7 +140,9 @@ export const getScoredRepositories = async (
       return
     }
     // Cache miss - fetch from GitHub API
-    let repositories: Array<Repository> = []
+    let repositories: Array<
+      GitHubRepository | GitLabRepository | BitbucketRepository
+    > = []
     switch (filters.targetedSystem) {
       case 'GITHUB':
         repositories = await githubService.searchRepositories(filters)
@@ -146,7 +160,8 @@ export const getScoredRepositories = async (
     }
 
     const scoredRepositories = repositories.map(repo => ({
-      ...repo,
+      id: repo.id,
+      name: repo.name,
       popularityScore: getScore(repo, filters.targetedSystem),
     }))
 

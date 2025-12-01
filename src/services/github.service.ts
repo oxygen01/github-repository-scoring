@@ -1,7 +1,13 @@
 import { Octokit } from 'octokit'
+import { Endpoints } from '@octokit/types'
 
-import { SearchFilters, Repository, ApiError, GithubRepository } from '../types'
+import { SearchFilters, GitHubRepository, ApiError } from '../types'
 import { getConfig } from '../config/app.config'
+
+// GitHub-specific types (kept local to this service)
+type GitHubSearchResponse =
+  Endpoints['GET /search/repositories']['response']['data']
+type GitHubRepositoryRes = GitHubSearchResponse['items'][number]
 
 const cleanApiError = (error: unknown): ApiError => {
   if (error && typeof error === 'object' && 'status' in error) {
@@ -76,7 +82,9 @@ class GitHubService {
     })
   }
 
-  async searchRepositories(filters: SearchFilters): Promise<Repository[]> {
+  async searchRepositories(
+    filters: SearchFilters,
+  ): Promise<GitHubRepository[]> {
     try {
       const query = `language:${filters.language} created:>=${filters.createdAfter} stars:>0 fork:false`
 
@@ -87,18 +95,14 @@ class GitHubService {
         per_page: filters.limit || 100, // GitHub API max is 100
       })
 
-      // Map GitHub API response to our GithubRepo type
+      // Map GitHub API response to platform-agnostic Repository type
       return response.data.items.map(
-        (item: GithubRepository): Repository => ({
+        (item: GitHubRepositoryRes): GitHubRepository => ({
           id: item.id,
           name: item.name,
-          fullName: item.full_name,
-          htmlUrl: item.html_url,
           stargazersCount: item.stargazers_count,
           forksCount: item.forks_count,
           updatedAt: item.updated_at,
-          language: item.language,
-          createdAt: item.created_at,
         }),
       )
     } catch (error) {

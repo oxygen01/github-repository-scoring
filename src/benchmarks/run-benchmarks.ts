@@ -1,13 +1,11 @@
-import {
-  calculateGitHubScore,
-  RepoScoreInput,
-} from '../services/scoring.service'
+import { GitHubRepository } from '@/types'
+import { calculateGitHubScore } from '../services/scoring.service'
 
 const validateDate = (dateStr: string): boolean => {
   const date = new Date(dateStr)
   return !isNaN(date.getTime())
 }
-export function calculateScoreExponential(repo: RepoScoreInput): number {
+export function calculateScoreExponential(repo: GitHubRepository): number {
   const stars = repo.stargazersCount ?? 0
   const forks = repo.forksCount ?? 0
 
@@ -36,7 +34,9 @@ export function calculateScoreExponential(repo: RepoScoreInput): number {
   return Number(Math.min(10, normalized).toFixed(2))
 }
 
-export function calculateScoreHackerNewsRanking(repo: RepoScoreInput): number {
+export function calculateScoreHackerNewsRanking(
+  repo: GitHubRepository,
+): number {
   const stars = repo.stargazersCount ?? 0
   const forks = repo.forksCount ?? 0
 
@@ -60,10 +60,12 @@ export function calculateScoreHackerNewsRanking(repo: RepoScoreInput): number {
   return Number(Math.min(10, normalized).toFixed(2))
 }
 
-function generateFakeRepos(count: number): RepoScoreInput[] {
+function generateFakeRepos(count: number): GitHubRepository[] {
   const repos = []
   for (let i = 0; i < count; i++) {
     repos.push({
+      id: i + 1,
+      name: `repo-${i + 1}`,
       stargazersCount: Math.floor(Math.random() * 50000),
       forksCount: Math.floor(Math.random() * 10000),
       updatedAt: new Date(

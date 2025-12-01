@@ -1,34 +1,39 @@
-import { Endpoints } from '@octokit/types'
+// Supported version control systems
+export type VersionControlSystem = 'GITHUB' | 'GITLAB' | 'BITBUCKET'
 
-type SearchRepositoriesResponse =
-  Endpoints['GET /search/repositories']['response']['data']
-
-export type GithubRepository = SearchRepositoriesResponse['items'][number]
-
-export type Repository = {
-  id: GithubRepository['id']
-  name: GithubRepository['name']
-  fullName: GithubRepository['full_name']
-  htmlUrl: string
-  stargazersCount: GithubRepository['stargazers_count']
-  forksCount: GithubRepository['forks_count']
-  updatedAt: GithubRepository['updated_at']
-  language: GithubRepository['language']
-  createdAt: GithubRepository['created_at']
+// Platform-agnostic repository type
+export type GitHubRepository = {
+  id: number
+  name: string
+  stargazersCount: number
+  forksCount: number
+  updatedAt: string
+}
+export type GitLabRepository = {
+  id: number
+  name: string
+  updatedAt: string
+  [key: string]: any
+}
+export type BitbucketRepository = {
+  id: number
+  name: string
+  updatedAt: string
+  [key: string]: any
 }
 
-type SearchRepositoriesParameters =
-  Endpoints['GET /search/repositories']['parameters']
-
-// Application-specific search filters that map to GitHub API parameters
+// Application-specific search filters (platform-agnostic)
 export interface SearchFilters {
-  targetedSystem: 'GITHUB' | 'GITLAB' | 'BITBUCKET'
+  targetedSystem: VersionControlSystem
   language: string // Required: Programming language filter
   createdAfter: string // Required: Creation date filter in ISO8601 format (YYYY-MM-DD)
-  limit?: SearchRepositoriesParameters['per_page'] // Optional: Number of results (1-100, default 30)
+  limit?: number // Optional: Number of results (1-100, default 30)
 }
 
-export interface ScoredRepository extends Repository {
+// Simplified response type for API output
+export interface ScoredRepository {
+  id: number
+  name: string
   popularityScore: number
 }
 

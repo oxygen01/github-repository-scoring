@@ -1,9 +1,8 @@
-import { Repository } from '../types'
-
-export type RepoScoreInput = Pick<
-  Repository,
-  'stargazersCount' | 'forksCount' | 'updatedAt'
->
+import {
+  GitHubRepository,
+  GitLabRepository,
+  BitbucketRepository,
+} from '../types'
 
 /**
  * Calculate popularity score for GitHub repositories (0-10 scale).
@@ -55,33 +54,35 @@ const calculateScore = (popularity: number, updatedAt: string): number => {
 }
 
 export const getScore = (
-  repo: RepoScoreInput,
+  repo: GitHubRepository | GitLabRepository | BitbucketRepository,
   source: 'GITHUB' | 'GITLAB' | 'BITBUCKET',
 ): number => {
   switch (source) {
     case 'GITHUB':
-      return calculateGitHubScore(repo)
+      return calculateGitHubScore(repo as GitHubRepository)
     case 'GITLAB':
-      return calculategitlabScore(repo)
+      return calculategitlabScore(repo as GitLabRepository)
     case 'BITBUCKET':
       // Placeholder for Bitbucket scoring logic
-      return calculateBitbucketScore(repo)
+      return calculateBitbucketScore(repo as BitbucketRepository)
     default:
       return 0
   }
 }
 
-const calculategitlabScore = (_repo: RepoScoreInput): number => {
+const calculategitlabScore = (_repo: GitLabRepository): number => {
   // todo implement Gitlab scoring logic
-  return 0
+  const popularity = 0 // Placeholder for GitLab popularity calculation
+  return calculateScore(popularity, _repo.updatedAt)
 }
 
-const calculateBitbucketScore = (_repo: RepoScoreInput): number => {
+const calculateBitbucketScore = (_repo: BitbucketRepository): number => {
   // todo implement Bitbucket scoring logic
-  return 0
+  const popularity = 0 // Placeholder for Bitbucket popularity calculation
+  return calculateScore(popularity, _repo.updatedAt)
 }
 
-export const calculateGitHubScore = (repo: RepoScoreInput): number => {
+export const calculateGitHubScore = (repo: GitHubRepository): number => {
   const stars = repo.stargazersCount ?? 0
   const forks = repo.forksCount ?? 0
 

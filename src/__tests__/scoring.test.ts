@@ -1,16 +1,16 @@
-import {
-  calculateGitHubScore,
-  RepoScoreInput,
-} from '../services/scoring.service'
+import { GitHubRepository } from '@/types'
+import { calculateGitHubScore } from '../services/scoring.service'
 
 describe('calculateGitHubScore', () => {
   const createTestRepo = (
     stars: number,
     forks: number,
     daysAgo: number,
-  ): RepoScoreInput => {
+  ): GitHubRepository => {
     const updatedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000)
     return {
+      id: 1 + stars + forks + daysAgo,
+      name: 'test-repo',
       stargazersCount: stars,
       forksCount: forks,
       updatedAt: updatedAt.toISOString(),

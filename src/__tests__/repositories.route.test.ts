@@ -1,7 +1,7 @@
 import request from 'supertest'
 import express from 'express'
 import { repositoriesRouter } from '../routes/repositories.routes'
-import { Repository, ApiError } from '../types'
+import { GitHubRepository, ApiError } from '../types'
 
 // Mock the cache service
 jest.mock('../services/cache.service', () => ({
@@ -58,20 +58,18 @@ describe('Repositories Route - /score', () => {
   })
 
   // Test data factories
-  const createMockRepo = (overrides: Partial<Repository> = {}): Repository => ({
+  const createMockRepo = (
+    overrides: Partial<GitHubRepository> = {},
+  ): GitHubRepository => ({
     id: 12345,
     name: 'test-repo',
-    fullName: 'owner/test-repo',
-    htmlUrl: 'https://github.com/owner/test-repo',
     stargazersCount: 100,
     forksCount: 20,
     updatedAt: '2024-01-01T00:00:00Z',
-    language: 'JavaScript',
-    createdAt: '2023-01-01T00:00:00Z',
     ...overrides,
   })
 
-  const createMockRepos = (): Repository[] => [
+  const createMockRepos = (): GitHubRepository[] => [
     createMockRepo({
       id: 1,
       name: 'popular-repo',
@@ -342,7 +340,7 @@ describe('Repositories Route - /score', () => {
       // Verify response metadata
       expect(response.body.totalCount).toBe(3)
 
-      repos.forEach((repo: Repository & { popularityScore: number }) => {
+      repos.forEach((repo: GitHubRepository & { popularityScore: number }) => {
         expect(repo).toHaveProperty('id')
         expect(repo).toHaveProperty('name')
         expect(repo).toHaveProperty('popularityScore')
